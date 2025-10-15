@@ -49,35 +49,23 @@ def add_access_entry_to_dataset(dataset: Dataset, access_entry: AccessEntry) -> 
 
 
 def get_dataset_replication_config(client: Client, project: str, dataset: str) -> Dict[str, Any]:
-    """Query current replication configuration from INFORMATION_SCHEMA.
-
-    Args:
-        client (Client): BigQuery client
-        project (str): GCP project ID
-        dataset (str): Dataset name
-
-    Returns:
-        Dict[str, Any]: Dictionary with 'replicas' (list) and 'primary' (str or None)
-    """
-    query = f"""
-    SELECT
-        replica_location,
-        is_primary_replica
-    FROM `{project}.{dataset}`.INFORMATION_SCHEMA.SCHEMATA_REPLICAS
-    WHERE schema_name = '{dataset}'
-    """
+    """Query current replication configuration from INFORMATION_SCHEMA."""
+    # Query the dataset-scoped INFORMATION_SCHEMA; no extra WHERE needed.
+    query = (
+        f"SELECT replica_location, is_primary_replica "
+        f"FROM `{project}.{dataset}.INFORMATION_SCHEMA.SCHEMATA_REPLICAS`"
+    )
     try:
-        result = list(client.query(query).result())
+        result_iter = client.query(query).result()
         replicas: List[str] = []
         primary: Optional[str] = None
-        for row in result:
+        for row in result_iter:
             replicas.append(row.replica_location)
             if row.is_primary_replica:
                 primary = row.replica_location
         return {"replicas": replicas, "primary": primary}
-    except (google_exceptions.NotFound, google_exceptions.BadRequest) as exc:
-        # Dataset doesn't exist or no replication configured
-        logger.warning(f"Exception while fetching replication info for {project}.{dataset}: {exc}")
+    except (google_exceptions.NotFound, google_exceptions.BadRequest, google_exceptions.GoogleAPIError) as exc:
+        logger.warning(f"Unable to fetch replication info for `{project}.{dataset}`: {exc}")
         return {"replicas": [], "primary": None}
 
 
