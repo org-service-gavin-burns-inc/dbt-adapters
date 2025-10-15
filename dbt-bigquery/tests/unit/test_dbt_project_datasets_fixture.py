@@ -1,4 +1,5 @@
 """Test the dbt_project_datasets fixture."""
+
 import pytest
 
 
