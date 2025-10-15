@@ -566,8 +566,22 @@ class BigQueryConnectionManager(BaseConnectionManager):
                 retry=self._retry.create_reopen_with_deadline(conn),
             )
 
-            # Apply replication configuration if specified
+            # Apply replication configuration if specified and valid
             if dataset_replicas:
+                # Basic validation to avoid malformed configs triggering DDL
+                if not isinstance(dataset_replicas, list) or not all(
+                    isinstance(loc, str) and loc for loc in dataset_replicas
+                ):
+                    logger.warning(
+                        f"Invalid dataset_replicas for {database}.{schema}: {dataset_replicas}. Skipping replication configuration."
+                    )
+                    return dataset
+                if primary_replica is not None and not isinstance(primary_replica, str):
+                    logger.warning(
+                        f"Invalid primary_replica for {database}.{schema}: {primary_replica}. Skipping primary configuration."
+                    )
+                    primary_replica = None
+
                 from dbt.adapters.bigquery.dataset import apply_dataset_replication
 
                 apply_dataset_replication(
