@@ -17,16 +17,37 @@ config-version: 2
 
 profile: test
 
+# Top-level dataset configurations
+datasets:
+  analytics:
+    location: 'US'
+    replication:
+      enabled: true
+      replicas:
+        - us-east1
+        - us-west1
+      primary_location: us-central1
+    labels:
+      env: prod
+      tier: critical
+  
+  staging:
+    location: 'US'
+    labels:
+      env: dev
+
 models:
   test_datasets:
-    +dataset: "{{ target.schema }}"
-    +materialized: view
+    analytics:
+      +schema: analytics  # Uses datasets.analytics config
+    staging:
+      +schema: staging    # Uses datasets.staging config
 """
 
 
 @pytest.fixture(scope="class")
 def dbt_project_datasets():
-    """Fixture providing dbt_project.yml configuration for dataset testing."""
+    """Fixture providing dbt_project.yml configuration for dataset testing with top-level datasets."""
     return dbt_project_datasets_yml
 
 
