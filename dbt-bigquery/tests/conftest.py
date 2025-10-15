@@ -9,6 +9,27 @@ from dbt.adapters.bigquery.credentials import _is_base64, _base64_to_string
 pytest_plugins = ["dbt.tests.fixtures.project"]
 
 
+# dbt_project.yml configuration for dataset-related tests
+dbt_project_datasets_yml = """
+name: test_datasets
+version: '1.0'
+config-version: 2
+
+profile: test
+
+models:
+  test_datasets:
+    +dataset: "{{ target.schema }}"
+    +materialized: view
+"""
+
+
+@pytest.fixture(scope="class")
+def dbt_project_datasets():
+    """Fixture providing dbt_project.yml configuration for dataset testing."""
+    return dbt_project_datasets_yml
+
+
 def pytest_addoption(parser):
     parser.addoption("--profile", action="store", default="oauth", type=str)
 
