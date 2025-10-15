@@ -139,4 +139,5 @@ class DatasetConfigApplier:
         if not config or not config.has_replication():
             return None
 
+        assert config.replication is not None  # Type narrowing for mypy
         return config.replication.to_dict()

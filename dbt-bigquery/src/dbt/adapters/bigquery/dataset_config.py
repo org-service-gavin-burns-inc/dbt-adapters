@@ -51,7 +51,7 @@ class BigQueryDatasetConfig:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
-        result = {
+        result: Dict[str, Any] = {
             'name': self.name,
             'location': self.location,
             'labels': self.labels,
@@ -109,6 +109,7 @@ class BigQueryDatasetConfig:
             errors.append("Dataset location is required")
 
         if self.has_replication():
+            assert self.replication is not None  # Type narrowing for mypy
             if not self.replication.replicas:
                 errors.append(
                     f"Dataset '{self.name}': replication enabled but "
