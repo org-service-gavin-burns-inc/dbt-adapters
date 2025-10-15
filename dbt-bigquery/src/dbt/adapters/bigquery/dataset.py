@@ -64,7 +64,11 @@ def get_dataset_replication_config(client: Client, project: str, dataset: str) -
             if row.is_primary_replica:
                 primary = row.replica_location
         return {"replicas": replicas, "primary": primary}
-    except (google_exceptions.NotFound, google_exceptions.BadRequest, google_exceptions.GoogleAPIError) as exc:
+    except (
+        google_exceptions.NotFound,
+        google_exceptions.BadRequest,
+        google_exceptions.GoogleAPIError,
+    ) as exc:
         logger.warning(f"Unable to fetch replication info for `{project}.{dataset}`: {exc}")
         return {"replicas": [], "primary": None}
 
