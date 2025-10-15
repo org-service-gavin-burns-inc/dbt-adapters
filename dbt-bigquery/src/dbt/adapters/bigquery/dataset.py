@@ -75,7 +75,10 @@ def get_dataset_replication_config(client: Client, project: str, dataset: str) -
             if row.is_primary_replica:
                 primary = row.replica_location
         return {"replicas": replicas, "primary": primary}
-    except (google_exceptions.NotFound, google_exceptions.BadRequest):
+    except (google_exceptions.NotFound, google_exceptions.BadRequest) as exc:
+        # Dataset doesn't exist or no replication configured
+        logger.warning(f"Exception while fetching replication info for {project}.{dataset}: {exc}")
+    return {"replicas": [], "primary": None}
         # Dataset doesn't exist or no replication configured
         pass
     return {"replicas": [], "primary": None}
