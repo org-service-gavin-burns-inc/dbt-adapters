@@ -17,18 +17,18 @@ class BigQueryReplicationConfig:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
         return {
-            'enabled': self.enabled,
-            'replicas': self.replicas,
-            'primary_location': self.primary_location,
+            "enabled": self.enabled,
+            "replicas": self.replicas,
+            "primary_location": self.primary_location,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'BigQueryReplicationConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> "BigQueryReplicationConfig":
         """Create from dictionary representation."""
         return cls(
-            enabled=data.get('enabled', True),
-            replicas=data.get('replicas', []),
-            primary_location=data.get('primary_location'),
+            enabled=data.get("enabled", True),
+            replicas=data.get("replicas", []),
+            primary_location=data.get("primary_location"),
         )
 
 
@@ -37,7 +37,7 @@ class BigQueryDatasetConfig:
     """Complete configuration for a BigQuery dataset."""
 
     name: str
-    location: str = 'US'
+    location: str = "US"
     replication: Optional[BigQueryReplicationConfig] = None
     labels: Dict[str, str] = field(default_factory=dict)
     description: Optional[str] = None
@@ -52,41 +52,41 @@ class BigQueryDatasetConfig:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
         result: Dict[str, Any] = {
-            'name': self.name,
-            'location': self.location,
-            'labels': self.labels,
+            "name": self.name,
+            "location": self.location,
+            "labels": self.labels,
         }
 
         if self.replication:
-            result['replication'] = self.replication.to_dict()
+            result["replication"] = self.replication.to_dict()
 
         if self.description:
-            result['description'] = self.description
+            result["description"] = self.description
 
         if self.default_table_expiration_ms:
-            result['default_table_expiration_ms'] = self.default_table_expiration_ms
+            result["default_table_expiration_ms"] = self.default_table_expiration_ms
 
         if self.default_partition_expiration_ms:
-            result['default_partition_expiration_ms'] = self.default_partition_expiration_ms
+            result["default_partition_expiration_ms"] = self.default_partition_expiration_ms
 
         return result
 
     @classmethod
-    def from_dict(cls, name: str, data: Dict[str, Any]) -> 'BigQueryDatasetConfig':
+    def from_dict(cls, name: str, data: Dict[str, Any]) -> "BigQueryDatasetConfig":
         """Create from dictionary representation."""
-        replication_data = data.get('replication')
+        replication_data = data.get("replication")
         replication = None
         if replication_data:
             replication = BigQueryReplicationConfig.from_dict(replication_data)
 
         return cls(
             name=name,
-            location=data.get('location', 'US'),
+            location=data.get("location", "US"),
             replication=replication,
-            labels=data.get('labels', {}),
-            description=data.get('description'),
-            default_table_expiration_ms=data.get('default_table_expiration_ms'),
-            default_partition_expiration_ms=data.get('default_partition_expiration_ms'),
+            labels=data.get("labels", {}),
+            description=data.get("description"),
+            default_table_expiration_ms=data.get("default_table_expiration_ms"),
+            default_partition_expiration_ms=data.get("default_partition_expiration_ms"),
         )
 
     def compute_hash(self) -> str:
@@ -112,8 +112,7 @@ class BigQueryDatasetConfig:
             assert self.replication is not None  # Type narrowing for mypy
             if not self.replication.replicas:
                 errors.append(
-                    f"Dataset '{self.name}': replication enabled but "
-                    "no replicas specified"
+                    f"Dataset '{self.name}': replication enabled but " "no replicas specified"
                 )
 
             if not self.replication.primary_location:
@@ -126,8 +125,7 @@ class BigQueryDatasetConfig:
             for replica in self.replication.replicas:
                 if not replica or not isinstance(replica, str):
                     errors.append(
-                        f"Dataset '{self.name}': invalid replica "
-                        f"location: {replica}"
+                        f"Dataset '{self.name}': invalid replica " f"location: {replica}"
                     )
 
         # Validate labels

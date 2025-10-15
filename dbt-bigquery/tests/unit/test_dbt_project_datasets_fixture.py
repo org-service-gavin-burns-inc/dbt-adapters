@@ -27,4 +27,3 @@ def test_dbt_project_datasets_fixture_contains_model_references(dbt_project_data
     assert "models:" in dbt_project_datasets
     assert "+schema: analytics" in dbt_project_datasets
     assert "+schema: staging" in dbt_project_datasets
-
