@@ -68,8 +68,8 @@ def get_dataset_replication_config(client: Client, project: str, dataset: str) -
     """
     try:
         result = list(client.query(query).result())
-        replicas = []
-        primary = None
+        replicas: List[str] = []
+        primary: Optional[str] = None
         for row in result:
             replicas.append(row.replica_location)
             if row.is_primary_replica:
@@ -78,10 +78,7 @@ def get_dataset_replication_config(client: Client, project: str, dataset: str) -
     except (google_exceptions.NotFound, google_exceptions.BadRequest) as exc:
         # Dataset doesn't exist or no replication configured
         logger.warning(f"Exception while fetching replication info for {project}.{dataset}: {exc}")
-    return {"replicas": [], "primary": None}
-        # Dataset doesn't exist or no replication configured
-        pass
-    return {"replicas": [], "primary": None}
+        return {"replicas": [], "primary": None}
 
 
 def needs_replication_update(
