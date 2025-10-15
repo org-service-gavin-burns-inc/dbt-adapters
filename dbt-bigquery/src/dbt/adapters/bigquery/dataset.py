@@ -155,17 +155,22 @@ def apply_dataset_replication(
         logger.info(f"Dropping replica: {location}")
         try:
             client.query(sql).result()
-        except google_exceptions.GoogleAPIError as e:
-            logger.warning(f"Failed to drop replica {location}: {e}")
-
-    # Set primary replica if specified and different
-    if desired_primary and current["primary"] != desired_primary:
-        sql = (
-            f"ALTER SCHEMA `{project}.{dataset}` "
-            f"SET OPTIONS (default_replica = `{desired_primary}`)"
-        )
-        logger.info(f"Setting primary replica: {desired_primary}")
-        try:
+        # Set primary replica if specified and different
+        if desired_primary:
+            if desired_primary not in desired_replicas_set:
+                logger.warning(
+                    f"Primary replica '{desired_primary}' is not in the desired replicas list; skipping primary update."
+                )
+            elif current["primary"] != desired_primary:
+                sql = (
+                    f"ALTER SCHEMA `{project}.{dataset}` "
+                    f"SET OPTIONS (default_replica = `{desired_primary}`)"
+                )
+                logger.info(f"Setting primary replica: {desired_primary}")
+                try:
+                    client.query(sql).result()
+                except google_exceptions.GoogleAPIError as e:
+                    logger.warning(f"Failed to set primary replica: {e}")
             client.query(sql).result()
         except google_exceptions.GoogleAPIError as e:
             logger.warning(f"Failed to set primary replica: {e}")
