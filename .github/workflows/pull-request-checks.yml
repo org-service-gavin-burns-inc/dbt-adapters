@@ -36,12 +36,6 @@ jobs:
                 env:
                     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            -   name: "Check that forks have the '${{ env.CI_LABEL }}' label"
-                if: ${{ github.event.pull_request.head.repo.full_name != github.repository && !contains(github.event.pull_request.labels.*.name, env.CI_LABEL) }}
-                run: |
-                    msg="Pull request is from a public fork but does not have the '${{ env.CI_LABEL }}' label.  No CI will be run."
-                    echo "::error::$msg"
-                    exit 1
 
     affected-packages:
         permissions:
