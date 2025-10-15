@@ -30,7 +30,7 @@ datasets:
     labels:
       env: prod
       tier: critical
-  
+
   staging:
     location: 'US'
     labels:

@@ -10,14 +10,14 @@ from dbt.adapters.bigquery.dataset_config import (
 
 class TestBigQueryReplicationConfig:
     """Tests for BigQueryReplicationConfig."""
-    
+
     def test_default_config(self):
         """Test default replication configuration."""
         config = BigQueryReplicationConfig()
         assert config.enabled is True
         assert config.replicas == []
         assert config.primary_location is None
-    
+
     def test_full_config(self):
         """Test full replication configuration."""
         config = BigQueryReplicationConfig(
@@ -28,7 +28,7 @@ class TestBigQueryReplicationConfig:
         assert config.enabled is True
         assert config.replicas == ['us-east1', 'us-west1']
         assert config.primary_location == 'us-central1'
-    
+
     def test_to_dict(self):
         """Test conversion to dictionary."""
         config = BigQueryReplicationConfig(
@@ -40,7 +40,7 @@ class TestBigQueryReplicationConfig:
         assert result['enabled'] is True
         assert result['replicas'] == ['us-east1']
         assert result['primary_location'] == 'us-central1'
-    
+
     def test_from_dict(self):
         """Test creation from dictionary."""
         data = {
@@ -56,7 +56,7 @@ class TestBigQueryReplicationConfig:
 
 class TestBigQueryDatasetConfig:
     """Tests for BigQueryDatasetConfig."""
-    
+
     def test_minimal_config(self):
         """Test minimal dataset configuration."""
         config = BigQueryDatasetConfig(name='test_dataset')
@@ -64,7 +64,7 @@ class TestBigQueryDatasetConfig:
         assert config.location == 'US'
         assert config.replication is None
         assert config.labels == {}
-    
+
     def test_full_config(self):
         """Test full dataset configuration."""
         replication = BigQueryReplicationConfig(
@@ -85,7 +85,7 @@ class TestBigQueryDatasetConfig:
         assert config.has_replication() is True
         assert config.labels == {'env': 'prod', 'tier': 'critical'}
         assert config.description == 'Analytics dataset'
-    
+
     def test_from_dict_with_replication(self):
         """Test creation from dictionary with replication."""
         data = {
@@ -103,7 +103,7 @@ class TestBigQueryDatasetConfig:
         assert config.has_replication() is True
         assert config.replication.replicas == ['us-east1', 'us-west1']
         assert config.labels == {'env': 'prod'}
-    
+
     def test_from_dict_without_replication(self):
         """Test creation from dictionary without replication."""
         data = {
@@ -114,36 +114,36 @@ class TestBigQueryDatasetConfig:
         assert config.name == 'staging'
         assert config.location == 'EU'
         assert config.has_replication() is False
-    
+
     def test_compute_hash(self):
         """Test hash computation for change detection."""
         config1 = BigQueryDatasetConfig(name='test', location='US')
         hash1 = config1.compute_hash()
         assert len(hash1) == 16
-        
+
         # Same config should produce same hash
         config2 = BigQueryDatasetConfig(name='test', location='US')
         hash2 = config2.compute_hash()
         assert hash1 == hash2
-        
+
         # Different config should produce different hash
         config3 = BigQueryDatasetConfig(name='test', location='EU')
         hash3 = config3.compute_hash()
         assert hash1 != hash3
-    
+
     def test_validate_minimal_valid(self):
         """Test validation of minimal valid configuration."""
         config = BigQueryDatasetConfig(name='test', location='US')
         errors = config.validate()
         assert len(errors) == 0
-    
+
     def test_validate_missing_name(self):
         """Test validation catches missing name."""
         config = BigQueryDatasetConfig(name='', location='US')
         errors = config.validate()
         assert len(errors) > 0
         assert any('name is required' in err for err in errors)
-    
+
     def test_validate_replication_no_replicas(self):
         """Test validation catches replication without replicas."""
         replication = BigQueryReplicationConfig(
@@ -159,7 +159,7 @@ class TestBigQueryDatasetConfig:
         errors = config.validate()
         assert len(errors) > 0
         assert any('no replicas specified' in err for err in errors)
-    
+
     def test_validate_replication_no_primary(self):
         """Test validation catches replication without primary location."""
         replication = BigQueryReplicationConfig(
@@ -179,14 +179,14 @@ class TestBigQueryDatasetConfig:
 
 class TestDatasetConfigManager:
     """Tests for DatasetConfigManager."""
-    
+
     def test_empty_manager(self):
         """Test empty manager initialization."""
         manager = DatasetConfigManager()
         assert len(manager.configs) == 0
         assert manager.get_config('test') is None
         assert not manager.has_config('test')
-    
+
     def test_parse_simple_configs(self):
         """Test parsing simple dataset configurations."""
         datasets_config = {
@@ -199,16 +199,16 @@ class TestDatasetConfigManager:
             }
         }
         manager = DatasetConfigManager(datasets_config)
-        
+
         assert len(manager.configs) == 2
         assert manager.has_config('analytics')
         assert manager.has_config('staging')
-        
+
         analytics_config = manager.get_config('analytics')
         assert analytics_config.name == 'analytics'
         assert analytics_config.location == 'US'
         assert analytics_config.labels == {'env': 'prod'}
-    
+
     def test_parse_config_with_replication(self):
         """Test parsing configuration with replication."""
         datasets_config = {
@@ -223,13 +223,13 @@ class TestDatasetConfigManager:
             }
         }
         manager = DatasetConfigManager(datasets_config)
-        
+
         config = manager.get_config('analytics')
         assert config is not None
         assert config.has_replication() is True
         assert config.replication.replicas == ['us-east1', 'us-west1']
         assert config.replication.primary_location == 'us-central1'
-    
+
     def test_get_all_configs(self):
         """Test getting all configurations."""
         datasets_config = {
@@ -237,12 +237,12 @@ class TestDatasetConfigManager:
             'staging': {'location': 'EU'}
         }
         manager = DatasetConfigManager(datasets_config)
-        
+
         all_configs = manager.get_all_configs()
         assert len(all_configs) == 2
         assert 'analytics' in all_configs
         assert 'staging' in all_configs
-    
+
     def test_validate_all_valid(self):
         """Test validation of all valid configurations."""
         datasets_config = {
@@ -257,7 +257,7 @@ class TestDatasetConfigManager:
         manager = DatasetConfigManager(datasets_config)
         errors = manager.validate_all()
         assert len(errors) == 0
-    
+
     def test_validate_all_with_errors(self):
         """Test validation catches errors across all configurations."""
         datasets_config = {
