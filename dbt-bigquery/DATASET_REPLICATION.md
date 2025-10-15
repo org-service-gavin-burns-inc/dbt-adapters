@@ -66,7 +66,7 @@ models:
         - us-east1
         - us-west1
       +primary_replica: us-central1
-    
+
     staging:
       +schema: staging
       # No replication for staging
@@ -179,14 +179,14 @@ models:
 
 ## Features
 
-✅ **No hooks required** - Native adapter behavior integrated into schema creation flow  
-✅ **Smart state checking** - Only runs ALTER statements when configuration differs  
-✅ **First model wins** - First model materialized to a dataset sets replication  
-✅ **Config changes detected** - Automatically updates on config change  
-✅ **DDL-only** - Uses ALTER SCHEMA statements, no bq CLI dependency  
-✅ **Works with all materializations** - Table, view, incremental, etc.  
-✅ **Project-level defaults** - Set defaults in dbt_project.yml like other configs  
-✅ **Per-model override** - Override at model or directory level  
+✅ **No hooks required** - Native adapter behavior integrated into schema creation flow
+✅ **Smart state checking** - Only runs ALTER statements when configuration differs
+✅ **First model wins** - First model materialized to a dataset sets replication
+✅ **Config changes detected** - Automatically updates on config change
+✅ **DDL-only** - Uses ALTER SCHEMA statements, no bq CLI dependency
+✅ **Works with all materializations** - Table, view, incremental, etc.
+✅ **Project-level defaults** - Set defaults in dbt_project.yml like other configs
+✅ **Per-model override** - Override at model or directory level
 
 ## Technical Details
 

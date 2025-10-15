@@ -60,7 +60,7 @@ def get_dataset_replication_config(client: Client, project: str, dataset: str) -
         Dict[str, Any]: Dictionary with 'replicas' (list) and 'primary' (str or None)
     """
     query = f"""
-    SELECT 
+    SELECT
         replica_location,
         is_primary_replica
     FROM `{project}.{dataset}`.INFORMATION_SCHEMA.SCHEMATA_REPLICAS

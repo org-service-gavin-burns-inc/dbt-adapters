@@ -354,10 +354,10 @@ class BigQueryAdapter(BaseAdapter):
         primary_replica: Optional[str] = None,
     ) -> None:
         """Create dataset and apply replication configuration if specified.
-        
+
         This method is called from the bigquery__create_schema macro to handle
         both dataset creation and replication configuration.
-        
+
         Args:
             relation: The relation representing the schema/dataset
             dataset_replicas: Optional list of replica locations
@@ -365,7 +365,7 @@ class BigQueryAdapter(BaseAdapter):
         """
         database = relation.database
         schema = relation.schema
-        
+
         # Create the dataset (this handles exists_ok internally)
         self.connections.create_dataset(
             database=database,

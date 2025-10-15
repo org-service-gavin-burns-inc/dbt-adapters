@@ -39,12 +39,12 @@ models:
         - us-west1
       +primary_replica: us-east1
       +materialized: table
-    
+
     # Staging models - no replication
     staging:
       +schema: staging
       +materialized: view
-    
+
     # Critical models - multi-region replication
     critical:
       +schema: critical_data
@@ -131,13 +131,13 @@ my_project:
       project: my-dev-project
       dataset: dev_analytics
       # No replication for dev
-    
+
     prod:
       type: bigquery
       project: my-prod-project
       dataset: analytics
       # Variables for prod
-  
+
   target: dev
 ```
 
