@@ -1,6 +1,7 @@
-from typing import List
+from typing import Dict, List, Optional, Any
 
-from google.cloud.bigquery import AccessEntry, Dataset
+from google.cloud.bigquery import AccessEntry, Client, Dataset
+from google.api_core import exceptions as google_exceptions
 
 from dbt.adapters.events.logging import AdapterLogger
 
@@ -45,3 +46,123 @@ def add_access_entry_to_dataset(dataset: Dataset, access_entry: AccessEntry) -> 
     access_entries.append(access_entry)
     dataset.access_entries = access_entries
     return dataset
+
+
+def get_dataset_replication_config(client: Client, project: str, dataset: str) -> Dict[str, Any]:
+    """Query current replication configuration from INFORMATION_SCHEMA.
+
+    Args:
+        client (Client): BigQuery client
+        project (str): GCP project ID
+        dataset (str): Dataset name
+
+    Returns:
+        Dict[str, Any]: Dictionary with 'replicas' (list) and 'primary' (str or None)
+    """
+    query = f"""
+    SELECT 
+        replica_location,
+        is_primary_replica
+    FROM `{project}.{dataset}`.INFORMATION_SCHEMA.SCHEMATA_REPLICAS
+    WHERE schema_name = '{dataset}'
+    """
+    try:
+        result = list(client.query(query).result())
+        replicas = []
+        primary = None
+        for row in result:
+            replicas.append(row.replica_location)
+            if row.is_primary_replica:
+                primary = row.replica_location
+        return {"replicas": replicas, "primary": primary}
+    except (google_exceptions.NotFound, google_exceptions.BadRequest):
+        # Dataset doesn't exist or no replication configured
+        pass
+    return {"replicas": [], "primary": None}
+
+
+def needs_replication_update(
+    current_config: Dict[str, Any],
+    desired_replicas: List[str],
+    desired_primary: Optional[str] = None,
+) -> bool:
+    """Determine if replication configuration needs to be updated.
+
+    Args:
+        current_config (Dict[str, Any]): Current config from get_dataset_replication_config
+        desired_replicas (List[str]): Desired replica locations
+        desired_primary (Optional[str]): Desired primary replica location
+
+    Returns:
+        bool: True if update is needed, False otherwise
+    """
+    current_replicas = set(current_config.get("replicas", []))
+    desired_replicas_set = set(desired_replicas)
+
+    if current_replicas != desired_replicas_set:
+        return True
+
+    if desired_primary and current_config.get("primary") != desired_primary:
+        return True
+
+    return False
+
+
+def apply_dataset_replication(
+    client: Client,
+    project: str,
+    dataset: str,
+    desired_replicas: List[str],
+    desired_primary: Optional[str] = None,
+) -> None:
+    """Apply replication configuration using ALTER SCHEMA DDL.
+
+    Args:
+        client (Client): BigQuery client
+        project (str): GCP project ID
+        dataset (str): Dataset name
+        desired_replicas (List[str]): Desired replica locations
+        desired_primary (Optional[str]): Desired primary replica location
+    """
+    # Get current state
+    current = get_dataset_replication_config(client, project, dataset)
+
+    # Check if update is needed
+    if not needs_replication_update(current, desired_replicas, desired_primary):
+        logger.debug(f"Dataset {project}.{dataset} replication already configured correctly")
+        return
+
+    logger.info(f"Configuring replication for dataset {project}.{dataset}")
+
+    current_replicas = set(current["replicas"])
+    desired_replicas_set = set(desired_replicas)
+
+    # Add new replicas
+    to_add = desired_replicas_set - current_replicas
+    for location in to_add:
+        sql = f"ALTER SCHEMA `{project}.{dataset}` ADD REPLICA `{location}`"
+        logger.info(f"Adding replica: {location}")
+        try:
+            client.query(sql).result()
+        except google_exceptions.GoogleAPIError as e:
+            if "already exists" not in str(e).lower():
+                logger.warning(f"Failed to add replica {location}: {e}")
+
+    # Remove old replicas
+    to_remove = current_replicas - desired_replicas_set
+    for location in to_remove:
+        sql = f"ALTER SCHEMA `{project}.{dataset}` DROP REPLICA `{location}`"
+        logger.info(f"Dropping replica: {location}")
+        try:
+            client.query(sql).result()
+        except google_exceptions.GoogleAPIError as e:
+            logger.warning(f"Failed to drop replica {location}: {e}")
+
+    # Set primary replica if specified and different
+    if desired_primary and current["primary"] != desired_primary:
+        sql = f"ALTER SCHEMA `{project}.{dataset}` SET OPTIONS (default_replica = `{desired_primary}`)"
+        logger.info(f"Setting primary replica: {desired_primary}")
+        try:
+            client.query(sql).result()
+        except google_exceptions.GoogleAPIError as e:
+            logger.warning(f"Failed to set primary replica: {e}")

@@ -554,15 +554,31 @@ class BigQueryConnectionManager(BaseConnectionManager):
                 retry=self._retry.create_reopen_with_deadline(conn),
             )
 
-    def create_dataset(self, database, schema) -> Dataset:
+    def create_dataset(
+        self, database, schema, dataset_replicas=None, primary_replica=None
+    ) -> Dataset:
         conn = self.get_thread_connection()
         client: Client = conn.handle
         with self.exception_handler("create dataset"):
-            return client.create_dataset(
+            dataset = client.create_dataset(
                 dataset=self.dataset_ref(database, schema),
                 exists_ok=True,
                 retry=self._retry.create_reopen_with_deadline(conn),
             )
+
+            # Apply replication configuration if specified
+            if dataset_replicas:
+                from dbt.adapters.bigquery.dataset import apply_dataset_replication
+
+                apply_dataset_replication(
+                    client=client,
+                    project=database,
+                    dataset=schema,
+                    desired_replicas=dataset_replicas,
+                    desired_primary=primary_replica,
+                )
+
+            return dataset
 
     def list_dataset(self, database: str):
         # The database string we get here is potentially quoted.
