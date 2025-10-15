@@ -112,26 +112,16 @@ def apply_dataset_replication(
     desired_replicas: List[str],
     desired_primary: Optional[str] = None,
 ) -> None:
-    """Apply replication configuration using ALTER SCHEMA DDL.
-
-    Args:
-        client (Client): BigQuery client
-        project (str): GCP project ID
-        dataset (str): Dataset name
-        desired_replicas (List[str]): Desired replica locations
-        desired_primary (Optional[str]): Desired primary replica location
-    """
-    # Get current state
+    """Apply replication configuration using ALTER SCHEMA DDL."""
     current = get_dataset_replication_config(client, project, dataset)
 
-    # Check if update is needed
     if not needs_replication_update(current, desired_replicas, desired_primary):
         logger.debug(f"Dataset {project}.{dataset} replication already configured correctly")
         return
 
     logger.info(f"Configuring replication for dataset {project}.{dataset}")
 
-    current_replicas = set(current["replicas"])
+    current_replicas = set(current.get("replicas", []))
     desired_replicas_set = set(desired_replicas)
 
     # Add new replicas
@@ -142,6 +132,7 @@ def apply_dataset_replication(
         try:
             client.query(sql).result()
         except google_exceptions.GoogleAPIError as e:
+            # Ignore "already exists", warn otherwise
             if "already exists" not in str(e).lower():
                 logger.warning(f"Failed to add replica {location}: {e}")
 
@@ -152,28 +143,23 @@ def apply_dataset_replication(
         logger.info(f"Dropping replica: {location}")
         try:
             client.query(sql).result()
-        # Set primary replica if specified and different
-        if desired_primary:
-            if desired_primary not in desired_replicas_set:
-                # Set primary replica if specified and different
-                if desired_primary and current.get("primary") != desired_primary:
-                    if desired_primary not in desired_replicas:
-                        logger.warning(
-                            f"Desired primary replica '{desired_primary}' is not in desired replicas {sorted(set(desired_replicas))}. "
-                            "Skipping setting primary replica."
-                        )
-                    else:
-                        sql = (
-                            f"ALTER SCHEMA `{project}.{dataset}` "
-                            f"SET OPTIONS (default_replica = `{desired_primary}`)"
-                        )
-                        logger.info(f"Setting primary replica: {desired_primary}")
-                        try:
-                            client.query(sql).result()
-                        except google_exceptions.GoogleAPIError as e:
-                            logger.warning(f"Failed to set primary replica: {e}")
-                except google_exceptions.GoogleAPIError as e:
-                    logger.warning(f"Failed to set primary replica: {e}")
-            client.query(sql).result()
         except google_exceptions.GoogleAPIError as e:
-            logger.warning(f"Failed to set primary replica: {e}")
+            logger.warning(f"Failed to drop replica {location}: {e}")
+
+    # Set primary replica if specified and different
+    if desired_primary:
+        if desired_primary not in desired_replicas_set:
+            logger.warning(
+                f"Desired primary replica '{desired_primary}' is not in desired replicas {sorted(desired_replicas_set)}. "
+                "Skipping setting primary replica."
+            )
+        elif current.get("primary") != desired_primary:
+            sql = (
+                f"ALTER SCHEMA `{project}.{dataset}` "
+                f"SET OPTIONS (default_replica = `{desired_primary}`)"
+            )
+            logger.info(f"Setting primary replica: {desired_primary}")
+            try:
+                client.query(sql).result()
+            except google_exceptions.GoogleAPIError as e:
+                logger.warning(f"Failed to set primary replica '{desired_primary}': {e}")
