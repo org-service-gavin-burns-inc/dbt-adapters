@@ -102,10 +102,9 @@ def needs_replication_update(
     if current_replicas != desired_replicas_set:
         return True
 
-    if desired_primary and current_config.get("primary") != desired_primary:
-        return True
-
-    return False
+    return bool(
+        desired_primary and current_config.get("primary") != desired_primary
+    )
 
 
 def apply_dataset_replication(
