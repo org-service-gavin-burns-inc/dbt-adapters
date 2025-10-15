@@ -160,7 +160,10 @@ def apply_dataset_replication(
 
     # Set primary replica if specified and different
     if desired_primary and current["primary"] != desired_primary:
-        sql = f"ALTER SCHEMA `{project}.{dataset}` SET OPTIONS (default_replica = `{desired_primary}`)"
+        sql = (
+            f"ALTER SCHEMA `{project}.{dataset}` "
+            f"SET OPTIONS (default_replica = `{desired_primary}`)"
+        )
         logger.info(f"Setting primary replica: {desired_primary}")
         try:
             client.query(sql).result()
