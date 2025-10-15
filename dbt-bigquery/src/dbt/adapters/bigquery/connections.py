@@ -580,6 +580,8 @@ class BigQueryConnectionManager(BaseConnectionManager):
 
             return dataset
 
+            return dataset
+
     def list_dataset(self, database: str):
         # The database string we get here is potentially quoted.
         # Strip that off for the API call.
