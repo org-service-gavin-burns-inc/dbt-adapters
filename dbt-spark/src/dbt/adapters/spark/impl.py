@@ -1,5 +1,6 @@
 import os
 import re
+import time
 from concurrent.futures import Future
 from dataclasses import dataclass
 from typing import (
@@ -20,8 +21,11 @@ from typing import (
 from dbt.adapters.base.relation import InformationSchema
 from dbt.adapters.contracts.connection import AdapterResponse
 from dbt.adapters.events.logging import AdapterLogger
+from dbt.adapters.events.types import SQLQuery, SQLQueryStatus
+from dbt_common.events.contextvars import get_node_info
+from dbt_common.events.functions import fire_event
 from dbt_common.exceptions import DbtRuntimeError, CompilationError
-from dbt_common.utils import AttrDict, executor
+from dbt_common.utils import AttrDict, cast_to_str, executor
 
 from typing_extensions import TypeAlias
 
@@ -463,9 +467,31 @@ class SparkAdapter(SQLAdapter):
     # Spark doesn't have 'commit' and 'rollback', so this override
     # doesn't include those commands.
     def run_sql_for_tests(self, sql, fetch, conn):  # type: ignore
+        # Log the SQL query being executed (debug mode)
+        fire_event(
+            SQLQuery(
+                conn_name=cast_to_str(conn.name),
+                sql=sql,
+                node_info=get_node_info(),
+            )
+        )
+        
         cursor = conn.handle.cursor()
+        pre = time.perf_counter()
+        
         try:
             cursor.execute(sql)
+            
+            # Log the successful execution with timing
+            elapsed = time.perf_counter() - pre
+            fire_event(
+                SQLQueryStatus(
+                    status="OK",
+                    elapsed=elapsed,
+                    node_info=get_node_info(),
+                )
+            )
+            
             if fetch == "one":
                 if hasattr(cursor, "fetchone"):
                     return cursor.fetchone()

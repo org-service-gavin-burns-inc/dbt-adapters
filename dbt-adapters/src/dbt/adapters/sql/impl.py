@@ -1,12 +1,15 @@
 from typing import Any, List, Optional, Tuple, Type, TYPE_CHECKING
+import time
 
+from dbt_common.events.contextvars import get_node_info
 from dbt_common.events.functions import fire_event
 from dbt_common.record import record_function
+from dbt_common.utils import cast_to_str
 
 from dbt.adapters.base import BaseAdapter, BaseRelation, available
 from dbt.adapters.cache import _make_ref_key_dict
 from dbt.adapters.contracts.connection import AdapterResponse, Connection
-from dbt.adapters.events.types import ColTypeChange, SchemaCreation, SchemaDrop
+from dbt.adapters.events.types import ColTypeChange, SchemaCreation, SchemaDrop, SQLQuery, SQLQueryStatus
 from dbt.adapters.exceptions import RelationTypeNullError
 from dbt.adapters.record.base import AdapterTestSqlRecord, AdapterAddQueryRecord
 from dbt.adapters.sql.connections import SQLConnectionManager
@@ -265,11 +268,33 @@ class SQLAdapter(BaseAdapter):
         AdapterTestSqlRecord, method=True, index_on_thread_id=True, id_field_name="thread_id"
     )
     def run_sql_for_tests(self, sql, fetch, conn):
+        # Log the SQL query being executed (debug mode)
+        fire_event(
+            SQLQuery(
+                conn_name=cast_to_str(conn.name),
+                sql=sql,
+                node_info=get_node_info(),
+            )
+        )
+        
         cursor = conn.handle.cursor()
+        pre = time.perf_counter()
+        
         try:
             cursor.execute(sql)
             if hasattr(conn.handle, "commit"):
                 conn.handle.commit()
+            
+            # Log the successful execution with timing
+            elapsed = time.perf_counter() - pre
+            fire_event(
+                SQLQueryStatus(
+                    status="OK",
+                    elapsed=elapsed,
+                    node_info=get_node_info(),
+                )
+            )
+            
             if fetch == "one":
                 return cursor.fetchone()
             elif fetch == "all":
