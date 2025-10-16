@@ -279,21 +279,13 @@ class SQLAdapter(BaseAdapter):
         
         cursor = conn.handle.cursor()
         pre = time.perf_counter()
+        status = "ERROR"
         
         try:
             cursor.execute(sql)
             if hasattr(conn.handle, "commit"):
                 conn.handle.commit()
-            
-            # Log the successful execution with timing
-            elapsed = time.perf_counter() - pre
-            fire_event(
-                SQLQueryStatus(
-                    status="OK",
-                    elapsed=elapsed,
-                    node_info=get_node_info(),
-                )
-            )
+            status = "OK"
             
             if fetch == "one":
                 return cursor.fetchone()
@@ -308,4 +300,13 @@ class SQLAdapter(BaseAdapter):
             print(e)
             raise
         finally:
+            # Log the execution status with timing (success or failure)
+            elapsed = time.perf_counter() - pre
+            fire_event(
+                SQLQueryStatus(
+                    status=status,
+                    elapsed=elapsed,
+                    node_info=get_node_info(),
+                )
+            )
             conn.transaction_open = False

@@ -478,19 +478,11 @@ class SparkAdapter(SQLAdapter):
         
         cursor = conn.handle.cursor()
         pre = time.perf_counter()
+        status = "ERROR"
         
         try:
             cursor.execute(sql)
-            
-            # Log the successful execution with timing
-            elapsed = time.perf_counter() - pre
-            fire_event(
-                SQLQueryStatus(
-                    status="OK",
-                    elapsed=elapsed,
-                    node_info=get_node_info(),
-                )
-            )
+            status = "OK"
             
             if fetch == "one":
                 if hasattr(cursor, "fetchone"):
@@ -507,6 +499,15 @@ class SparkAdapter(SQLAdapter):
             print(e)
             raise
         finally:
+            # Log the execution status with timing (success or failure)
+            elapsed = time.perf_counter() - pre
+            fire_event(
+                SQLQueryStatus(
+                    status=status,
+                    elapsed=elapsed,
+                    node_info=get_node_info(),
+                )
+            )
             conn.transaction_open = False
 
     def generate_python_submission_response(self, submission_result: Any) -> AdapterResponse:
