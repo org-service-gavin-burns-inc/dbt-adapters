@@ -29,7 +29,7 @@ The following utilities are needed for developing the packages in this repositor
 This repository is a monorepo, meaning that it contains several packages that can each be installed independently.
 This allows for easier testing of related changes that live in different packages.
 For example, say you want to implement a feature in `dbt-postgres` that requires an update to `dbt-adapters`.
-This requires a change to at least two (`dbt-tests-adapter`?) different packages.
+This requires a change to at least two different packages (potentially including `dbt-tests-adapter` if tests need to be updated).
 This differs from a more traditional approach where each repository contains a single package.
 In particular, everything is moved "one level down".
 Make sure to take this into account when working with a specific package.
@@ -141,7 +141,7 @@ $ hatch run code-quality
 ```
 OR
 ```shell
-$ pre-commit -run --all-files
+$ pre-commit run --all-files
 ```
 
 ## Unit tests
@@ -168,7 +168,7 @@ This will vary by package; please refer to the package's `CONTRIBUTING.md` for m
 ### Configure environment variables
 
 Each adapter requires certain environment variables to connect to its platform.
-The template is contained in the respective `test.env.exmaple` file.
+The template is contained in the respective `test.env.example` file.
 If you already ran `hatch run setup` you should have a `test.env` file in the package root.
 Update the environment variables in this file with your instance's connection credentials.
 
