@@ -37,7 +37,7 @@ For more information on using dbt with BigQuery, consult [the docs](https://docs
 
 # Getting started
 
-Review the repository [README.md](/README.md) as most of that information pertains to `dbt-bigquery`.
+Review the repository [README.md](../README.md) as most of that information pertains to `dbt-bigquery`.
 
 ## Contribute
 
