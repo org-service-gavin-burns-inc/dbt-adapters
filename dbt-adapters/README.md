@@ -47,21 +47,21 @@ The `dbt-adapters` package provides the foundational framework for building data
 - Query execution and result handling
 - Integration with dbt-core's compilation and execution engine
 
-# Adapters
+## Adapters
 
 There are two major adapter types: [base](/dbt-adapters/src/dbt/adapters/base/impl.py) and [sql](/dbt-adapters/src/dbt/adapters/sql/impl.py).
 
-## `base`
+### `base`
 
 `BaseAdapter` defines the base functionality an adapter is required to implement in order to function with `dbt-core`.
 There are several methods which have default implementations as well as methods that require the concrete adapter to implement them.
 
-## `sql`
+### `sql`
 
 `SQLAdapter` inherits from `BaseAdapter`, updates default implementations to work with SQL-based platforms,
 and defines additional required methods to support those defaults.
 
-# Components
+## Components
 
 An adapter is composed of several components.
 
@@ -73,14 +73,14 @@ An adapter is composed of several components.
 The first two are platform-specific and require significant implementation in a concrete adapter.
 The last two are largely implemented in `dbt-adapters` with minor adjustments in a concrete adapter.
 
-## Connections
+### Connections
 
 This component is responsible for creating and managing connections to storage and compute.
 
 #### Files
 - `dbt/adapters/{base|sql}/connections.py`
 
-## Dialect
+### Dialect
 
 This component is responsible for translating a request from `dbt-core` into a specific set of actions on the platform.
 
@@ -92,14 +92,14 @@ This component is responsible for translating a request from `dbt-core` into a s
 - `dbt/adapters/clients/jinja.py`
 - `dbt/include/global_project/*`
 
-## Relation caching
+### Relation caching
 
 This component is responsible for managing a local cache of relations, relation metadata, and dependencies between relations.
 
 #### Files
 - `dbt/adapters/cache.py`
 
-## Integration with `dbt-core`
+### Integration with `dbt-core`
 
 This component is responsible for managing the interface between `dbt-core` and a concrete adapter.
 
