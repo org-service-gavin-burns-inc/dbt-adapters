@@ -24,6 +24,29 @@
     </a>
 </p>
 
+# dbt-adapters
+
+## Summary
+
+The `dbt-adapters` package provides the foundational framework for building database adapters in dbt (data build tool). This package defines the common interfaces and base implementations that enable dbt to connect to and interact with various data platforms.
+
+**What is dbt-adapters?**
+- A Python package that provides base classes and protocols for creating dbt database adapters
+- The core abstraction layer that allows dbt to work with different databases (Postgres, BigQuery, Snowflake, etc.)
+- A standardized interface for SQL and non-SQL data platforms
+
+**Who should use this?**
+- Developers building custom dbt adapters for new data platforms
+- Maintainers of existing dbt adapters
+- Contributors to the dbt ecosystem
+
+**Key Features:**
+- Base adapter implementations for SQL and non-SQL platforms
+- Connection management and credential handling
+- Relation caching and metadata management
+- Query execution and result handling
+- Integration with dbt-core's compilation and execution engine
+
 # Adapters
 
 There are two major adapter types: [base](/dbt-adapters/src/dbt/adapters/base/impl.py) and [sql](/dbt-adapters/src/dbt/adapters/sql/impl.py).
