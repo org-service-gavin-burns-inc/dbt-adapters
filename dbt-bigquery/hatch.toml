@@ -22,6 +22,7 @@ dependencies = [
     "pytest-csv~=3.0",
     "pytest-dotenv",
     "pytest-logbook~=1.2",
+    "logbook<1.9",
     "pytest-mock",
     "pytest-xdist",
     "requests",
@@ -34,7 +35,7 @@ setup = [
 ]
 code-quality = "pre-commit run --all-files"
 unit-tests = "python -m pytest {args:tests/unit}"
-integration-tests = "python -m pytest --profile service_account {args:tests/functional}"
+integration-tests = "python -m pytest --profile service_account --log-level=${LOG_LEVEL:-DEBUG} {args:tests/functional}"
 docker-dev = [
     "docker build -f docker/dev.Dockerfile -t dbt-bigquery-dev .",
 	"docker run --rm -it --name dbt-bigquery-dev -v $(shell pwd):/opt/code dbt-bigquery-dev",
@@ -79,6 +80,7 @@ dependencies = [
     "pytest>=7.0,<8.0",
     "pytest-csv~=3.0",
     "pytest-logbook~=1.2",
+    "logbook<1.9",
     "pytest-mock",
     "pytest-xdist",
     "requests",
@@ -99,6 +101,7 @@ dependencies = [
     "pytest>=7.0,<8.0",
     "pytest-csv~=3.0",
     "pytest-logbook~=1.2",
+    "logbook<1.9",
     "pytest-mock",
     "pytest-xdist",
     "requests",
